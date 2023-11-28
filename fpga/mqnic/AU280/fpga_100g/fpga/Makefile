@@ -112,6 +112,8 @@ SYN_FILES += lib/pcie/rtl/pcie_us_if_cc.v
 SYN_FILES += lib/pcie/rtl/pcie_us_if_cq.v
 SYN_FILES += lib/pcie/rtl/pcie_us_cfg.v
 SYN_FILES += lib/pcie/rtl/pulse_merge.v
+SYN_FILES += app/template/rtl/mqnic_app_block.v
+SYN_FILES += lib/axi/rtl/axil_ram.v
 
 # XDC files
 XDC_FILES = fpga.xdc

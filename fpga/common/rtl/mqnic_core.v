@@ -132,8 +132,8 @@ module mqnic_core #
     parameter AXI_HBM_WRAP_BURST = 0,
 
     // Application block configuration
-    parameter APP_ID = 32'h00000000,
-    parameter APP_ENABLE = 0,
+    parameter APP_ID = 32'h00000001,
+    parameter APP_ENABLE = 1,
     parameter APP_CTRL_ENABLE = 1,
     parameter APP_DMA_ENABLE = 1,
     parameter APP_AXIS_DIRECT_ENABLE = 1,

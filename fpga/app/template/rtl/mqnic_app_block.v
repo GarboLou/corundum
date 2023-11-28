@@ -153,6 +153,7 @@ module mqnic_app_block #
 
     /*
      * AXI-Lite slave interface (control from host)
+     * Dedicated AXI-lite master interface for application control
      */
     input  wire [AXIL_APP_CTRL_ADDR_WIDTH-1:0]            s_axil_app_ctrl_awaddr,
     input  wire [2:0]                                     s_axil_app_ctrl_awprot,
@@ -176,6 +177,7 @@ module mqnic_app_block #
 
     /*
      * AXI-Lite master interface (control to NIC)
+     * AXI-lite slave interface for access to NIC control register space (m_axil_ctrl)
      */
     output wire [AXIL_CTRL_ADDR_WIDTH-1:0]                m_axil_ctrl_awaddr,
     output wire [2:0]                                     m_axil_ctrl_awprot,
@@ -326,6 +328,8 @@ module mqnic_app_block #
     input  wire [PTP_PEROUT_COUNT-1:0]                    ptp_perout_error,
     input  wire [PTP_PEROUT_COUNT-1:0]                    ptp_perout_pulse,
 
+
+// Direct, MAC-synchronous, lowest-latency streaming interface (*_axis_direct_*)
     /*
      * Ethernet (direct MAC interface - lowest latency raw traffic)
      */
@@ -373,6 +377,8 @@ module mqnic_app_block #
     output wire [PORT_COUNT-1:0]                          m_axis_direct_rx_tlast,
     output wire [PORT_COUNT*AXIS_RX_USER_WIDTH-1:0]       m_axis_direct_rx_tuser,
 
+
+// Direct, datapath-synchronous, low-latency streaming interface (*_axis_sync_*)
     /*
      * Ethernet (synchronous MAC interface - low latency raw traffic)
      */
@@ -414,6 +420,9 @@ module mqnic_app_block #
     output wire [PORT_COUNT-1:0]                          m_axis_sync_rx_tlast,
     output wire [PORT_COUNT*AXIS_SYNC_RX_USER_WIDTH-1:0]  m_axis_sync_rx_tuser,
 
+
+
+// Interface-level streaming interface (*_axis_if_*)
     /*
      * Ethernet (internal at interface module)
      */
@@ -462,6 +471,8 @@ module mqnic_app_block #
     output wire [IF_COUNT*AXIS_IF_RX_ID_WIDTH-1:0]        m_axis_if_rx_tid,
     output wire [IF_COUNT*AXIS_IF_RX_DEST_WIDTH-1:0]      m_axis_if_rx_tdest,
     output wire [IF_COUNT*AXIS_IF_RX_USER_WIDTH-1:0]      m_axis_if_rx_tuser,
+
+
 
     /*
      * DDR
@@ -590,8 +601,8 @@ module mqnic_app_block #
 
 // check configuration
 initial begin
-    if (APP_ID != 32'h12340001) begin
-        $error("Error: Invalid APP_ID (expected 32'h12340001, got 32'h%x) (instance %m)", APP_ID);
+    if (APP_ID != 32'h00000001) begin
+        $error("Error: Invalid APP_ID (expected 32'h00000001, got 32'h%x) (instance %m)", APP_ID);
         $finish;
     end
 end
@@ -696,24 +707,59 @@ assign data_dma_ram_rd_resp_valid = data_dma_ram_rd_cmd_valid;
 /*
  * Ethernet (direct MAC interface - lowest latency raw traffic)
  */
-assign m_axis_direct_tx_tdata = s_axis_direct_tx_tdata;
-assign m_axis_direct_tx_tkeep = s_axis_direct_tx_tkeep;
-assign m_axis_direct_tx_tvalid = s_axis_direct_tx_tvalid;
-assign s_axis_direct_tx_tready = m_axis_direct_tx_tready;
-assign m_axis_direct_tx_tlast = s_axis_direct_tx_tlast;
-assign m_axis_direct_tx_tuser = s_axis_direct_tx_tuser;
+// assign m_axis_direct_tx_tdata = s_axis_direct_tx_tdata;
+// assign m_axis_direct_tx_tkeep = s_axis_direct_tx_tkeep;
+// assign m_axis_direct_tx_tvalid = s_axis_direct_tx_tvalid;
+// assign s_axis_direct_tx_tready = m_axis_direct_tx_tready;
+// assign m_axis_direct_tx_tlast = s_axis_direct_tx_tlast;
+// assign m_axis_direct_tx_tuser = s_axis_direct_tx_tuser;
+
+// assign m_axis_direct_tx_cpl_ts = s_axis_direct_tx_cpl_ts;
+// assign m_axis_direct_tx_cpl_tag = s_axis_direct_tx_cpl_tag;
+// assign m_axis_direct_tx_cpl_valid = s_axis_direct_tx_cpl_valid;
+// assign s_axis_direct_tx_cpl_ready = m_axis_direct_tx_cpl_ready;
+
+assign m_axis_direct_rx_tdata = s_axis_direct_rx_tdata;
+assign m_axis_direct_rx_tkeep = s_axis_direct_rx_tkeep;
+assign m_axis_direct_rx_tvalid = s_axis_direct_rx_tvalid;
+// assign s_axis_direct_rx_tready = m_axis_direct_rx_tready;
+assign m_axis_direct_rx_tlast = s_axis_direct_rx_tlast;
+assign m_axis_direct_rx_tuser = s_axis_direct_rx_tuser;
+
+/* L2 Forwarding
+ * s_axis_direct_rx -> m_axis_direct_tx
+ * swap source and destination MAC and IP
+*/ 
+
+// [335:328] - checksum
+// [271:240] - dst ip
+// [239:208] - src ip
+// [207:200] - checksum
+// [95:48] - src MAC
+// [47:0] - dst MAC
+
+assign s_axis_direct_tx_tready = 1'b0;
+assign s_axis_direct_rx_tready = m_axis_direct_tx_tready;
+
+// detects source MAC from Janux-06 MLNX BF-2 is b8:ce:f6:d2:12:ea
+assign m_axis_direct_tx_tdata = (s_axis_direct_rx_tdata[47:0] == 48'hea12d2f6ceb8) ? {s_axis_direct_rx_tdata[511:336], 
+                                s_axis_direct_rx_tdata[335:328] + 8'h2, 
+                                s_axis_direct_rx_tdata[327:272], 
+                                s_axis_direct_rx_tdata[239:208], 
+                                s_axis_direct_rx_tdata[271:240], 
+                                s_axis_direct_rx_tdata[207:200] + 8'h2, 
+                                s_axis_direct_rx_tdata[47:0], 
+                                s_axis_direct_rx_tdata[199:48]} : s_axis_direct_rx_tdata[511:0];
+assign m_axis_direct_tx_tkeep = s_axis_direct_rx_tkeep;
+assign m_axis_direct_tx_tvalid = s_axis_direct_rx_tvalid;
+assign m_axis_direct_tx_tlast = s_axis_direct_rx_tlast;
+assign m_axis_direct_tx_tuser = s_axis_direct_rx_tuser;
 
 assign m_axis_direct_tx_cpl_ts = s_axis_direct_tx_cpl_ts;
 assign m_axis_direct_tx_cpl_tag = s_axis_direct_tx_cpl_tag;
 assign m_axis_direct_tx_cpl_valid = s_axis_direct_tx_cpl_valid;
 assign s_axis_direct_tx_cpl_ready = m_axis_direct_tx_cpl_ready;
 
-assign m_axis_direct_rx_tdata = s_axis_direct_rx_tdata;
-assign m_axis_direct_rx_tkeep = s_axis_direct_rx_tkeep;
-assign m_axis_direct_rx_tvalid = s_axis_direct_rx_tvalid;
-assign s_axis_direct_rx_tready = m_axis_direct_rx_tready;
-assign m_axis_direct_rx_tlast = s_axis_direct_rx_tlast;
-assign m_axis_direct_rx_tuser = s_axis_direct_rx_tuser;
 
 /*
  * Ethernet (synchronous MAC interface - low latency raw traffic)
