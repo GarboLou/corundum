@@ -854,7 +854,7 @@ axis_sync_forward #(
 );
 
 
-axis_interconnect_1 axis_interconnect_sync_inst (
+axis_interconnect_0 axis_interconnect_sync_inst (
     .ACLK(clk),
     .ARESETN(!rst),
     .S00_AXIS_ACLK(clk),

@@ -1,6 +1,6 @@
-create_ip -name axis_interconnect -vendor xilinx.com -library ip -version 1.1 -module_name axis_interconnect_1
+create_ip -name axis_interconnect -vendor xilinx.com -library ip -version 1.1 -module_name axis_interconnect_0
 set_property -dict [list \
-    CONFIG.Component_Name {axis_interconnect_1} \
+    CONFIG.Component_Name {axis_interconnect_0} \
     CONFIG.C_NUM_SI_SLOTS {2} \
     CONFIG.SWITCH_TDATA_NUM_BYTES {64} \
     CONFIG.HAS_TSTRB {false} \
@@ -15,4 +15,4 @@ set_property -dict [list \
     CONFIG.S00_AXIS_TDATA_NUM_BYTES {64} \
     CONFIG.S01_AXIS_TDATA_NUM_BYTES {64} \
     CONFIG.M00_S01_CONNECTIVITY {true}\
-] [get_ips axis_interconnect_1]
+] [get_ips axis_interconnect_0]
