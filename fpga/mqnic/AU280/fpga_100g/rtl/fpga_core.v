@@ -103,13 +103,13 @@ module fpga_core #
     parameter AXI_HBM_MAX_BURST_LEN = 16,
 
     // Application block configuration
-    parameter APP_ID = 32'h00000000,
-    parameter APP_ENABLE = 0,
+    parameter APP_ID = 32'h12340001,
+    parameter APP_ENABLE = 1,
     parameter APP_CTRL_ENABLE = 1,
     parameter APP_DMA_ENABLE = 1,
     parameter APP_AXIS_DIRECT_ENABLE = 1,
-    parameter APP_AXIS_SYNC_ENABLE = 1,
-    parameter APP_AXIS_IF_ENABLE = 1,
+    parameter APP_AXIS_SYNC_ENABLE = 0,
+    parameter APP_AXIS_IF_ENABLE = 0,
     parameter APP_STAT_ENABLE = 1,
 
     // DMA interface configuration

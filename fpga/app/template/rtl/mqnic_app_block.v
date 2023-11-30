@@ -601,8 +601,8 @@ module mqnic_app_block #
 
 // check configuration
 initial begin
-    if (APP_ID != 32'h00000001) begin
-        $error("Error: Invalid APP_ID (expected 32'h00000001, got 32'h%x) (instance %m)", APP_ID);
+    if (APP_ID != 32'h12340001) begin
+        $error("Error: Invalid APP_ID (expected 32'h12340001, got 32'h%x) (instance %m)", APP_ID);
         $finish;
     end
 end
@@ -707,24 +707,49 @@ assign data_dma_ram_rd_resp_valid = data_dma_ram_rd_cmd_valid;
 /*
  * Ethernet (direct MAC interface - lowest latency raw traffic)
  */
-// assign m_axis_direct_tx_tdata = s_axis_direct_tx_tdata;
-// assign m_axis_direct_tx_tkeep = s_axis_direct_tx_tkeep;
-// assign m_axis_direct_tx_tvalid = s_axis_direct_tx_tvalid;
-// assign s_axis_direct_tx_tready = m_axis_direct_tx_tready;
-// assign m_axis_direct_tx_tlast = s_axis_direct_tx_tlast;
-// assign m_axis_direct_tx_tuser = s_axis_direct_tx_tuser;
+assign m_axis_direct_tx_tdata = s_axis_direct_tx_tdata;
+assign m_axis_direct_tx_tkeep = s_axis_direct_tx_tkeep;
+assign m_axis_direct_tx_tvalid = s_axis_direct_tx_tvalid;
+assign s_axis_direct_tx_tready = m_axis_direct_tx_tready;
+assign m_axis_direct_tx_tlast = s_axis_direct_tx_tlast;
+assign m_axis_direct_tx_tuser = s_axis_direct_tx_tuser;
 
-// assign m_axis_direct_tx_cpl_ts = s_axis_direct_tx_cpl_ts;
-// assign m_axis_direct_tx_cpl_tag = s_axis_direct_tx_cpl_tag;
-// assign m_axis_direct_tx_cpl_valid = s_axis_direct_tx_cpl_valid;
-// assign s_axis_direct_tx_cpl_ready = m_axis_direct_tx_cpl_ready;
+assign m_axis_direct_tx_cpl_ts = s_axis_direct_tx_cpl_ts;
+assign m_axis_direct_tx_cpl_tag = s_axis_direct_tx_cpl_tag;
+assign m_axis_direct_tx_cpl_valid = s_axis_direct_tx_cpl_valid;
+assign s_axis_direct_tx_cpl_ready = m_axis_direct_tx_cpl_ready;
 
 assign m_axis_direct_rx_tdata = s_axis_direct_rx_tdata;
 assign m_axis_direct_rx_tkeep = s_axis_direct_rx_tkeep;
 assign m_axis_direct_rx_tvalid = s_axis_direct_rx_tvalid;
-// assign s_axis_direct_rx_tready = m_axis_direct_rx_tready;
+assign s_axis_direct_rx_tready = m_axis_direct_rx_tready;
 assign m_axis_direct_rx_tlast = s_axis_direct_rx_tlast;
 assign m_axis_direct_rx_tuser = s_axis_direct_rx_tuser;
+
+
+/*
+ * Ethernet (synchronous MAC interface - low latency raw traffic)
+ */
+// assign m_axis_sync_tx_tdata = s_axis_sync_tx_tdata;
+// assign m_axis_sync_tx_tkeep = s_axis_sync_tx_tkeep;
+// assign m_axis_sync_tx_tvalid = s_axis_sync_tx_tvalid;
+// assign s_axis_sync_tx_tready = m_axis_sync_tx_tready;
+// assign m_axis_sync_tx_tlast = s_axis_sync_tx_tlast;
+// assign m_axis_sync_tx_tuser = s_axis_sync_tx_tuser;
+
+assign m_axis_sync_tx_cpl_ts = s_axis_sync_tx_cpl_ts;
+assign m_axis_sync_tx_cpl_tag = s_axis_sync_tx_cpl_tag;
+assign m_axis_sync_tx_cpl_valid = s_axis_sync_tx_cpl_valid;
+assign s_axis_sync_tx_cpl_ready = m_axis_sync_tx_cpl_ready;
+
+// assign m_axis_sync_rx_tdata = s_axis_sync_rx_tdata;
+// assign m_axis_sync_rx_tkeep = s_axis_sync_rx_tkeep;
+// assign m_axis_sync_rx_tvalid = s_axis_sync_rx_tvalid;
+// assign s_axis_sync_rx_tready = m_axis_sync_rx_tready;
+// assign m_axis_sync_rx_tlast = s_axis_sync_rx_tlast;
+// assign m_axis_sync_rx_tuser = s_axis_sync_rx_tuser;
+
+
 
 /* L2 Forwarding
  * s_axis_direct_rx -> m_axis_direct_tx
@@ -738,50 +763,130 @@ assign m_axis_direct_rx_tuser = s_axis_direct_rx_tuser;
 // [95:48] - src MAC
 // [47:0] - dst MAC
 
-assign s_axis_direct_tx_tready = 1'b0;
-assign s_axis_direct_rx_tready = m_axis_direct_tx_tready;
+// if (s_axis_sync_rx_tdata[47:0] == 48'hea12d2f6ceb8) begin
+//     s_axis_sync_tx_tready = 1'b0;
+//     s_axis_sync_rx_tready = m_axis_sync_tx_tready;
 
-// detects source MAC from Janux-06 MLNX BF-2 is b8:ce:f6:d2:12:ea
-assign m_axis_direct_tx_tdata = (s_axis_direct_rx_tdata[47:0] == 48'hea12d2f6ceb8) ? {s_axis_direct_rx_tdata[511:336], 
-                                s_axis_direct_rx_tdata[335:328] + 8'h2, 
-                                s_axis_direct_rx_tdata[327:272], 
-                                s_axis_direct_rx_tdata[239:208], 
-                                s_axis_direct_rx_tdata[271:240], 
-                                s_axis_direct_rx_tdata[207:200] + 8'h2, 
-                                s_axis_direct_rx_tdata[47:0], 
-                                s_axis_direct_rx_tdata[199:48]} : s_axis_direct_rx_tdata[511:0];
-assign m_axis_direct_tx_tkeep = s_axis_direct_rx_tkeep;
-assign m_axis_direct_tx_tvalid = s_axis_direct_rx_tvalid;
-assign m_axis_direct_tx_tlast = s_axis_direct_rx_tlast;
-assign m_axis_direct_tx_tuser = s_axis_direct_rx_tuser;
+//     // detects source MAC from Janux-06 MLNX BF-2 is b8:ce:f6:d2:12:ea
+//     m_axis_sync_tx_tdata = (s_axis_sync_rx_tdata[47:0] == 48'hea12d2f6ceb8) ? {s_axis_sync_rx_tdata[511:336], 
+//                             s_axis_sync_rx_tdata[335:328] + 8'h2, 
+//                             s_axis_sync_rx_tdata[327:272], 
+//                             s_axis_sync_rx_tdata[239:208], 
+//                             s_axis_sync_rx_tdata[271:240], 
+//                             s_axis_sync_rx_tdata[207:200] + 8'h2, 
+//                             s_axis_sync_rx_tdata[47:0], 
+//                             s_axis_sync_rx_tdata[199:48]} : s_axis_sync_rx_tdata[511:0];
 
-assign m_axis_direct_tx_cpl_ts = s_axis_direct_tx_cpl_ts;
-assign m_axis_direct_tx_cpl_tag = s_axis_direct_tx_cpl_tag;
-assign m_axis_direct_tx_cpl_valid = s_axis_direct_tx_cpl_valid;
-assign s_axis_direct_tx_cpl_ready = m_axis_direct_tx_cpl_ready;
+//     m_axis_sync_tx_tkeep = s_axis_sync_rx_tkeep;
+//     m_axis_sync_tx_tvalid = s_axis_sync_rx_tvalid;
+//     m_axis_sync_tx_tlast = s_axis_sync_rx_tlast;
+//     m_axis_sync_tx_tuser = s_axis_sync_rx_tuser;
+
+//     m_axis_sync_tx_cpl_ts = s_axis_sync_tx_cpl_ts;
+//     m_axis_sync_tx_cpl_tag = s_axis_sync_tx_cpl_tag;
+//     m_axis_sync_tx_cpl_valid = s_axis_sync_tx_cpl_valid;
+//     s_axis_sync_tx_cpl_ready = m_axis_sync_tx_cpl_ready;
+// end
+
+wire [PORT_COUNT*AXIS_SYNC_DATA_WIDTH-1:0]     m_axis_sync_tx_tdata_int;
+wire [PORT_COUNT*AXIS_SYNC_KEEP_WIDTH-1:0]     m_axis_sync_tx_tkeep_int;
+wire [PORT_COUNT-1:0]                          m_axis_sync_tx_tvalid_int;
+wire [PORT_COUNT-1:0]                          m_axis_sync_tx_tready_int;
+wire [PORT_COUNT-1:0]                          m_axis_sync_tx_tlast_int;
+wire [PORT_COUNT*AXIS_SYNC_TX_USER_WIDTH-1:0]  m_axis_sync_tx_tuser_int;
 
 
-/*
- * Ethernet (synchronous MAC interface - low latency raw traffic)
- */
-assign m_axis_sync_tx_tdata = s_axis_sync_tx_tdata;
-assign m_axis_sync_tx_tkeep = s_axis_sync_tx_tkeep;
-assign m_axis_sync_tx_tvalid = s_axis_sync_tx_tvalid;
-assign s_axis_sync_tx_tready = m_axis_sync_tx_tready;
-assign m_axis_sync_tx_tlast = s_axis_sync_tx_tlast;
-assign m_axis_sync_tx_tuser = s_axis_sync_tx_tuser;
+axis_sync_forward #(
+    // PTP configuration
+    .PTP_CLK_PERIOD_NS_NUM(PTP_CLK_PERIOD_NS_NUM),
+    .PTP_CLK_PERIOD_NS_DENOM(PTP_CLK_PERIOD_NS_DENOM),
+    .PTP_TS_WIDTH(PTP_TS_WIDTH),
+    .PTP_USE_SAMPLE_CLOCK(PTP_USE_SAMPLE_CLOCK),
+    .PTP_PORT_CDC_PIPELINE(PTP_PORT_CDC_PIPELINE),
+    .PTP_PEROUT_ENABLE(PTP_PEROUT_ENABLE),
+    .PTP_PEROUT_COUNT(PTP_PEROUT_COUNT),
 
-assign m_axis_sync_tx_cpl_ts = s_axis_sync_tx_cpl_ts;
-assign m_axis_sync_tx_cpl_tag = s_axis_sync_tx_cpl_tag;
-assign m_axis_sync_tx_cpl_valid = s_axis_sync_tx_cpl_valid;
-assign s_axis_sync_tx_cpl_ready = m_axis_sync_tx_cpl_ready;
+    // Interface configuration
+    .PTP_TS_ENABLE(PTP_TS_ENABLE),
+    .TX_TAG_WIDTH(TX_TAG_WIDTH),
+    .MAX_TX_SIZE(MAX_TX_SIZE),
+    .MAX_RX_SIZE(MAX_RX_SIZE),
 
-assign m_axis_sync_rx_tdata = s_axis_sync_rx_tdata;
-assign m_axis_sync_rx_tkeep = s_axis_sync_rx_tkeep;
-assign m_axis_sync_rx_tvalid = s_axis_sync_rx_tvalid;
-assign s_axis_sync_rx_tready = m_axis_sync_rx_tready;
-assign m_axis_sync_rx_tlast = s_axis_sync_rx_tlast;
-assign m_axis_sync_rx_tuser = s_axis_sync_rx_tuser;
+    // Ethernet interface configuration (direct, async)
+    .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
+    .AXIS_KEEP_WIDTH(AXIS_KEEP_WIDTH),
+    .AXIS_TX_USER_WIDTH(AXIS_TX_USER_WIDTH),
+    .AXIS_RX_USER_WIDTH(AXIS_RX_USER_WIDTH),
+    .AXIS_RX_USE_READY(AXIS_RX_USE_READY),
+
+    // Ethernet interface configuration (direct, sync)
+    .AXIS_SYNC_DATA_WIDTH(AXIS_SYNC_DATA_WIDTH),
+    .AXIS_SYNC_KEEP_WIDTH(AXIS_SYNC_KEEP_WIDTH),
+    .AXIS_SYNC_TX_USER_WIDTH(AXIS_TX_USER_WIDTH),
+    .AXIS_SYNC_RX_USER_WIDTH(AXIS_RX_USER_WIDTH)
+) forward_inst (
+    .clk(clk),
+    .aresetn(!rst),
+
+    // AXI input (sync)
+    .s_axis_tdata(s_axis_sync_rx_tdata),
+    .s_axis_tkeep(s_axis_sync_rx_tkeep),
+    .s_axis_tvalid(s_axis_sync_rx_tvalid),
+    .s_axis_tready(s_axis_sync_rx_tready),
+    .s_axis_tlast(s_axis_sync_rx_tlast),
+    .s_axis_tuser(s_axis_sync_rx_tuser),
+
+    // AXI output (host)
+    .m_axis_tdata_host(m_axis_sync_rx_tdata),
+    .m_axis_tkeep_host(m_axis_sync_rx_tkeep),
+    .m_axis_tvalid_host(m_axis_sync_rx_tvalid),
+    .m_axis_tready_host(m_axis_sync_rx_tvalid),
+    .m_axis_tlast_host(m_axis_sync_rx_tlast),
+    .m_axis_tuser_host(m_axis_sync_rx_tuser),
+
+    // AXI output (forward)
+    .m_axis_tdata_fwd(m_axis_sync_tx_tdata_int),
+    .m_axis_tkeep_fwd(m_axis_sync_tx_tkeep_int),
+    .m_axis_tvalid_fwd(m_axis_sync_tx_tvalid_int),
+    .m_axis_tready_fwd(m_axis_sync_tx_tready_int),
+    .m_axis_tlast_fwd(m_axis_sync_tx_tlast_int),
+    .m_axis_tuser_fwd(m_axis_sync_tx_tuser_int)
+);
+
+
+axis_interconnect_1 axis_interconnect_sync_inst (
+    .ACLK(clk),
+    .ARESETN(!rst),
+    .S00_AXIS_ACLK(clk),
+    .S01_AXIS_ACLK(clk),
+    .S00_AXIS_ARESETN(!rst),
+    .S01_AXIS_ARESETN(!rst),
+    .S00_AXIS_TVALID(s_axis_sync_tx_tvalid),
+    .S01_AXIS_TVALID(m_axis_sync_tx_tvalid_int),
+    .S00_AXIS_TREADY(s_axis_sync_tx_tready),
+    .S01_AXIS_TREADY(m_axis_sync_tx_tready_int),
+    .S00_AXIS_TDATA(s_axis_sync_tx_tdata),
+    .S01_AXIS_TDATA(m_axis_sync_tx_tdata_int),
+    .S00_AXIS_TKEEP(s_axis_sync_tx_tkeep),
+    .S01_AXIS_TKEEP(m_axis_sync_tx_tkeep_int),
+    .S00_AXIS_TLAST(s_axis_sync_tx_tlast),
+    .S01_AXIS_TLAST(m_axis_sync_tx_tlast_int),
+    .S00_AXIS_TUSER(s_axis_sync_tx_tuser),
+    .S01_AXIS_TUSER(m_axis_sync_tx_tuser_int),
+
+    .M00_AXIS_ACLK(clk),
+    .M00_AXIS_ARESETN(!rst),
+    .M00_AXIS_TVALID(m_axis_sync_tx_tvalid),
+    .M00_AXIS_TREADY(m_axis_sync_tx_tready),
+    .M00_AXIS_TDATA(m_axis_sync_tx_tdata),
+    .M00_AXIS_TKEEP(m_axis_sync_tx_tkeep),
+    .M00_AXIS_TLAST(m_axis_sync_tx_tlast),
+    .M00_AXIS_TUSER(m_axis_sync_tx_tuser)
+);
+
+
+
+
 
 /*
  * Ethernet (internal at interface module)

@@ -112,6 +112,7 @@ SYN_FILES += lib/pcie/rtl/pcie_us_if_cc.v
 SYN_FILES += lib/pcie/rtl/pcie_us_if_cq.v
 SYN_FILES += lib/pcie/rtl/pcie_us_cfg.v
 SYN_FILES += lib/pcie/rtl/pulse_merge.v
+SYN_FILES += app/template/rtl/axis_sync_forward.v
 SYN_FILES += app/template/rtl/mqnic_app_block.v
 SYN_FILES += lib/axi/rtl/axil_ram.v
 
@@ -136,6 +137,7 @@ IP_TCL_FILES = ip/pcie4c_uscale_plus_0.tcl
 IP_TCL_FILES += ip/cmac_usplus.tcl
 IP_TCL_FILES += ip/cmac_gty.tcl
 IP_TCL_FILES += ip/cms.tcl
+IP_TCL_FILES += ip/axis_interconnect.tcl
 #IP_TCL_FILES += ip/hbm_0.tcl
 #IP_TCL_FILES += ip/ddr4_0.tcl
 

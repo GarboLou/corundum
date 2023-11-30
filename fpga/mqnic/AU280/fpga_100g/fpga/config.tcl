@@ -55,7 +55,7 @@ dict set params GIT_HASH  "32'h${git_hash}"
 dict set params RELEASE_INFO  [format "32'h%08x" $release_info]
 
 # Structural configuration
-dict set params IF_COUNT "2"
+dict set params IF_COUNT "1"
 dict set params PORTS_PER_IF "1"
 dict set params SCHED_PER_IF [dict get $params PORTS_PER_IF]
 dict set params PORT_MASK "0"
@@ -119,12 +119,12 @@ dict set params HBM_GROUP_SIZE [dict get $params HBM_CH]
 dict set params AXI_HBM_MAX_BURST_LEN "16"
 
 # Application block configuration
-dict set params APP_ID "32'h00000001"
+dict set params APP_ID "32'h12340001"
 dict set params APP_ENABLE "1"
 dict set params APP_CTRL_ENABLE "1"
 dict set params APP_DMA_ENABLE "1"
 dict set params APP_AXIS_DIRECT_ENABLE "1"
-dict set params APP_AXIS_SYNC_ENABLE "0"
+dict set params APP_AXIS_SYNC_ENABLE "1"
 dict set params APP_AXIS_IF_ENABLE "0"
 dict set params APP_STAT_ENABLE "1"
 
