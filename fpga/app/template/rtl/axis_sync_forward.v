@@ -127,7 +127,7 @@ always @* begin
 
         // forward_ctl = 1 -> forward
         // forward_ctl = 0 -> to host
-        if (s_axis_tdata[47:0] == 48'hea12d2f6ceb8) begin
+        if (s_axis_tdata[95:48] == 48'hea12d2f6ceb8) begin
             // dummy forwarding, sending back whatever packet from janux-06's MLNX BF-2
             forward_ctl = 1'b1;
         end
@@ -144,7 +144,17 @@ always @* begin
 
     s_axis_tready_next = m_axis_tready_int_early;
 
-    m_axis_tdata_int  = s_axis_tdata;
+    // m_axis_tdata_int  = s_axis_tdata;
+    m_axis_tdata_int  = (s_axis_tdata[95:48] == 48'hea12d2f6ceb8) ? {s_axis_tdata[511:336], 
+                        s_axis_tdata[335:328] + 8'h2, 
+                        s_axis_tdata[327:272], 
+                        s_axis_tdata[239:208], 
+                        s_axis_tdata[271:240], 
+                        s_axis_tdata[207:200] + 8'h2, 
+                        s_axis_tdata[199:96],
+                        s_axis_tdata[47:0], 
+                        s_axis_tdata[95:48]} : s_axis_tdata[511:0];
+                        
     m_axis_tkeep_int  = s_axis_tkeep;
     m_axis_tvalid_int = (s_axis_tvalid && s_axis_tready && frame_ctl) << forward_ctl;
     m_axis_tlast_int  = s_axis_tlast;

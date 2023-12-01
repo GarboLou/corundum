@@ -763,19 +763,20 @@ assign s_axis_sync_tx_cpl_ready = m_axis_sync_tx_cpl_ready;
 // [95:48] - src MAC
 // [47:0] - dst MAC
 
-// if (s_axis_sync_rx_tdata[47:0] == 48'hea12d2f6ceb8) begin
+// if (s_axis_sync_rx_tdata[95:48] == 48'hea12d2f6ceb8) begin
 //     s_axis_sync_tx_tready = 1'b0;
 //     s_axis_sync_rx_tready = m_axis_sync_tx_tready;
 
 //     // detects source MAC from Janux-06 MLNX BF-2 is b8:ce:f6:d2:12:ea
-//     m_axis_sync_tx_tdata = (s_axis_sync_rx_tdata[47:0] == 48'hea12d2f6ceb8) ? {s_axis_sync_rx_tdata[511:336], 
+//     m_axis_sync_tx_tdata = (s_axis_sync_rx_tdata[95:48] == 48'hea12d2f6ceb8) ? {s_axis_sync_rx_tdata[511:336], 
 //                             s_axis_sync_rx_tdata[335:328] + 8'h2, 
 //                             s_axis_sync_rx_tdata[327:272], 
 //                             s_axis_sync_rx_tdata[239:208], 
 //                             s_axis_sync_rx_tdata[271:240], 
 //                             s_axis_sync_rx_tdata[207:200] + 8'h2, 
+//                             s_axis_sync_rx_tdata[199:96]
 //                             s_axis_sync_rx_tdata[47:0], 
-//                             s_axis_sync_rx_tdata[199:48]} : s_axis_sync_rx_tdata[511:0];
+//                             s_axis_sync_rx_tdata[95:48]} : s_axis_sync_rx_tdata[511:0];
 
 //     m_axis_sync_tx_tkeep = s_axis_sync_rx_tkeep;
 //     m_axis_sync_tx_tvalid = s_axis_sync_rx_tvalid;
@@ -794,6 +795,17 @@ wire [PORT_COUNT-1:0]                          m_axis_sync_tx_tvalid_int;
 wire [PORT_COUNT-1:0]                          m_axis_sync_tx_tready_int;
 wire [PORT_COUNT-1:0]                          m_axis_sync_tx_tlast_int;
 wire [PORT_COUNT*AXIS_SYNC_TX_USER_WIDTH-1:0]  m_axis_sync_tx_tuser_int;
+
+
+// assign m_axis_sync_tx_tdata_int = (m_axis_sync_tx_tdata_int[95:48] == 48'hea12d2f6ceb8) ? {m_axis_sync_tx_tdata_int[511:336], 
+//                         m_axis_sync_tx_tdata_int[335:328] + 8'h2, 
+//                         m_axis_sync_tx_tdata_int[327:272], 
+//                         m_axis_sync_tx_tdata_int[239:208], 
+//                         m_axis_sync_tx_tdata_int[271:240], 
+//                         m_axis_sync_tx_tdata_int[207:200] + 8'h2, 
+//                         m_axis_sync_tx_tdata_int[199:96],
+//                         m_axis_sync_tx_tdata_int[47:0], 
+//                         m_axis_sync_tx_tdata_int[95:48]} : m_axis_sync_tx_tdata_int[511:0];
 
 
 axis_sync_forward #(
@@ -881,7 +893,11 @@ axis_interconnect_0 axis_interconnect_sync_inst (
     .M00_AXIS_TDATA(m_axis_sync_tx_tdata),
     .M00_AXIS_TKEEP(m_axis_sync_tx_tkeep),
     .M00_AXIS_TLAST(m_axis_sync_tx_tlast),
-    .M00_AXIS_TUSER(m_axis_sync_tx_tuser)
+    .M00_AXIS_TUSER(m_axis_sync_tx_tuser),
+
+    .S00_ARB_REQ_SUPPRESS(1'b0),
+    .S01_ARB_REQ_SUPPRESS(1'b0)
+    
 );
 
 
